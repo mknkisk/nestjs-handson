@@ -1,11 +1,28 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
+  constructor(
+    @InjectRepository(User) private userRepository: Repository<User>,
+  ) {}
+
+  // CreateUserDto から name のみ取り出す
+  // async なので Promise を返す
+  async create({ name }: CreateUserDto): Promise<User> {
+    return await this.userRepository
+      .save({
+        name: name,
+      })
+      .catch((e) => {
+        throw new InternalServerErrorException(
+          `[${e.message}]：ユーザーの登録に失敗しました。`,
+        );
+      });
   }
 
   findAll() {
